@@ -19,13 +19,13 @@ create_exception!(ggca, GGCADiffSamples, pyo3::exceptions::PyException);
 
 fn get_correlation_result(
     tuple_1: TupleExpressionValues,
-    tuple_2: &TupleExpressionValues,
+    tuple_2: TupleExpressionValues,
     correlation_method_struct: &dyn Correlation,
 ) -> CorResult {
     // Gene and GEM
     let gene = tuple_1.0;
-    let gem = tuple_2.0.clone();
-    let cpg_site_id = tuple_2.1.clone();
+    let gem = tuple_2.0;
+    let cpg_site_id = tuple_2.1;
 
     let (correlation, p_value) =
         correlation_method_struct.correlate(tuple_1.2.as_slice(), tuple_2.2.as_slice());
@@ -43,7 +43,7 @@ fn get_correlation_result(
 /// Generates a cartesian product without checking for equal genes
 fn cartesian_all_vs_all(
     tuple_1: TupleExpressionValues,
-    tuple_2: &TupleExpressionValues,
+    tuple_2: TupleExpressionValues,
     correlation_method_struct: &dyn Correlation,
 ) -> CorResult {
     get_correlation_result(tuple_1, tuple_2, correlation_method_struct)
@@ -52,7 +52,7 @@ fn cartesian_all_vs_all(
 /// Generates a cartesian product checking for equal genes saving computation time
 fn cartesian_equal_genes(
     tuple_1: TupleExpressionValues,
-    tuple_2: &TupleExpressionValues,
+    tuple_2: TupleExpressionValues,
     correlation_method_struct: &dyn Correlation,
 ) -> CorResult {
     // Gene and GEM
@@ -160,7 +160,7 @@ impl Analysis {
         // Dataset 2 is referenced (iter) due each thread needs to iterate over its elements
         let correlations_and_p_values = d1_vec.into_par_iter().map(|x| {
             d2_vec.iter().map(|y| {
-                (x.clone(), y)
+                (x.clone(), y.clone())
             }).map(|(t1, t2)| {
                 correlation_function(t1, t2, &*correlation_method_struct)
             }).collect_vec()
