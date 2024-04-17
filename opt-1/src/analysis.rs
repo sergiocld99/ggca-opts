@@ -10,7 +10,7 @@ use itertools::Itertools;
 use log::warn;
 // Do not remove, it's used for tee()
 use pyo3::{create_exception, prelude::*};
-use rayon::iter::{ParallelIterator, IntoParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::fs;
 use std::sync::Mutex;
 
@@ -155,7 +155,18 @@ impl Analysis {
         // https://users.rust-lang.org/t/iterators-over-csv-files-with-iproduct/51947
         let d1_vec = dataset_1.lazy_matrix.collect_vec();
         let d2_vec = dataset_2.lazy_matrix.collect_vec(); 
-        
+
+        // Dataset 1 is consumed (into_iter) due it's the external iterator
+        // Dataset 2 is referenced (iter) due each thread needs to iterate over its elements
+        let correlations_and_p_values = d1_vec.into_par_iter().map(|x| {
+            d2_vec.iter().map(|y| {
+                (x.clone(), y.clone())
+            }).map(|(t1, t2)| {
+                correlation_function(t1, t2, &*correlation_method_struct)
+            }).collect_vec()
+        }).flatten();
+
+        /*   
         let correlations_and_p_values = d1_vec.into_par_iter().map(|x| {
             d2_vec.clone().into_iter().map(|y| {
                 (x.clone(), y)
@@ -163,6 +174,7 @@ impl Analysis {
                 correlation_function(t1, t2, &*correlation_method_struct)
             }).collect_vec()
         }).flatten();
+        */
 
         // Filtering by equal genes (if needed) and NaN values
         let nan_errors = ConstantInputError::new();
