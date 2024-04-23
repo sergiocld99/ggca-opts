@@ -2,8 +2,6 @@ use crate::types::{LazyMatrixInner, TupleExpressionValues};
 use csv::{Reader, ReaderBuilder};
 use pyo3::create_exception;
 use pyo3::PyResult;
-use rayon::iter::ParallelBridge;
-use rayon::iter::ParallelIterator;
 use std::fs::File;
 
 create_exception!(ggca, GGCAError, pyo3::exceptions::PyException);
